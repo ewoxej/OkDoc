@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/list_element"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="2pt"
+    android:background="@drawable/rounded_corner"
+    android:backgroundTint="#45444E"
+    android:backgroundTintMode="add"
+    android:clickable="true"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/name_str"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Name"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/num_str"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Num"
+            android:textAlignment="textStart"
+            android:textColor="#CCCCCC" />
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/copy_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="0"
+        android:background="#00FFFFFF"
+        app:srcCompat="?attr/actionModeCopyDrawable" />
+
+</LinearLayout>
