@@ -1,6 +1,8 @@
 package com.ewoxej.okdoc;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -12,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +23,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +36,7 @@ private BitmapRVAdapter bmpAdapter;
 private FieldsRVAdapter fieldsAdapter;
     public class BitmapRVAdapter extends RecyclerView.Adapter<EditorActivity.BitmapRVAdapter.ItemViewHolder>
     {
-        List<Bitmap> images;
+        public List<Bitmap> images;
         public class ItemViewHolder extends RecyclerView.ViewHolder
         {
             ImageView image;
@@ -172,6 +176,7 @@ private FieldsRVAdapter fieldsAdapter;
                     field.value = holder.value.getText().toString();
                     docEntry.fields.add(field);
                 }
+                docEntry.images = bmpAdapter.images;
                 DataStorage.get().getDocs().add(docEntry);
                 finish();
             }
@@ -185,18 +190,41 @@ private FieldsRVAdapter fieldsAdapter;
 
         RecyclerView rv_i = (RecyclerView)findViewById(R.id.rv_images);
         rv_i.setHasFixedSize(true);
-        LinearLayoutManager llm_i = new LinearLayoutManager(getApplicationContext());
+        LinearLayoutManager llm_i = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         rv_i.setLayoutManager(llm_i);
         bmpAdapter = new BitmapRVAdapter(docEntry.images);
         rv_i.setAdapter(bmpAdapter);
 
     }
-
+final int GALLERY_REQUEST = 0;
     public void addImageClick(View v)
     {
-//gallery intent
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        photoPickerIntent.setType("image/*");
+        startActivityForResult(photoPickerIntent, GALLERY_REQUEST);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+
+        Bitmap bitmap = null;
+
+
+        switch (requestCode) {
+            case GALLERY_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    Uri selectedImage = imageReturnedIntent.getData();
+                    try {
+                        bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), selectedImage);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    bmpAdapter.images.add(bitmap);
+                    bmpAdapter.notifyItemInserted(bmpAdapter.getItemCount());
+                }
+        }
+    }
     public void addFieldClick(View v)
     {
     fieldsAdapter.addField();

@@ -2,4 +2,5 @@
     <string name="app_name">OkDoc</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_editor">EditorActivity</string>
+    <string name="title_activity_view">ViewActivity</string>
 </resources>
