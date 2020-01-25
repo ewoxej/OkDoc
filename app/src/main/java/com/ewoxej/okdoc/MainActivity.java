@@ -2,6 +2,7 @@ package com.ewoxej.okdoc;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -13,13 +14,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,42 +28,40 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity
 {
-    class DocumentElement
-    {
-        private String name;
-        private String number;
-
-        public DocumentElement(String name, String num)
-        {
-            this.name = name;
-            this.number = num;
-        }
-    }
-    private List<DocumentElement> persons;
     // This method creates an ArrayList that has three Person objects
 // Checkout the project associated with this tutorial on Github if
-// you want to use the same images.
-    private void initializeData(){
-        persons = new ArrayList<>();
-        persons.add(new DocumentElement("monobank", "5375 4141 0330 7293"));
-        persons.add(new DocumentElement("PrivatBank Универсальная", "4149 6293 8503 2982"));
-        persons.add(new DocumentElement("Test", "something"));
-    }
-    public class RVAdapter extends RecyclerView.Adapter<RVAdapter.PersonViewHolder>
+// you want to use the same fields.
+    private RVAdapter adapter;
+    public class RVAdapter extends RecyclerView.Adapter<RVAdapter.ItemViewHolder>
     {
-        List<DocumentElement> persons;
-
-        RVAdapter(List<DocumentElement> persons)
+        List<DataStorage.DocEntry> docs;
+        public class ItemViewHolder extends RecyclerView.ViewHolder
         {
-            this.persons = persons;
+            TextView title;
+            TextView number;
+            View layout;
+            ImageButton copyBtn;
+            ItemViewHolder(View itemView)
+            {
+                super(itemView);
+                title = itemView.findViewById(R.id.name_str);
+                layout = itemView.findViewById(R.id.list_element);
+                number = itemView.findViewById(R.id.num_str);
+                copyBtn = itemView.findViewById(R.id.copy_btn);
+            }
+        }
+
+        RVAdapter()
+        {
+            this.docs = DataStorage.get().getDocs();
         }
 
         @NonNull
         @Override
-        public PersonViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType)
+        public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType)
         {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_element, parent, false);
-            PersonViewHolder pvh = new PersonViewHolder(v);
+            ItemViewHolder pvh = new ItemViewHolder(v);
             return pvh;
         }
 
@@ -74,10 +71,14 @@ public class MainActivity extends AppCompatActivity
         }
 
         @Override
-        public void onBindViewHolder(@NonNull final PersonViewHolder holder, int position)
+        public void onBindViewHolder(@NonNull final ItemViewHolder holder, int position)
         {
-            holder.personName.setText(persons.get(position).name);
-            holder.personAge.setText(persons.get(position).number);
+            DataStorage.DocEntry currentDoc = docs.get(position);
+            holder.title.setText(currentDoc.name);
+            if(currentDoc.fields.isEmpty())
+                holder.number.setText("");
+            else
+                holder.number.setText(currentDoc.fields.get(0).value);
             holder.layout.setOnClickListener(new View.OnClickListener()
             { public void onClick(View v){
                 Toast toast = Toast.makeText(getApplicationContext(),
@@ -87,7 +88,7 @@ public class MainActivity extends AppCompatActivity
             holder.copyBtn.setOnClickListener(new View.OnClickListener()
             { public void onClick(View v){
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("label", holder.personAge.getText());
+                ClipData clip = ClipData.newPlainText("label", holder.number.getText());
                 clipboard.setPrimaryClip(clip);
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "Copied!", Toast.LENGTH_SHORT);
@@ -98,27 +99,12 @@ public class MainActivity extends AppCompatActivity
         @Override
         public int getItemCount()
         {
-            return persons.size();
+            return docs.size();
         }
 
-        public class PersonViewHolder extends RecyclerView.ViewHolder
-        {
-            TextView personName;
-            TextView personAge;
-            View layout;
-            ImageButton copyBtn;
 
-            PersonViewHolder(View itemView)
-            {
-                super(itemView);
-                personName = (TextView) itemView.findViewById(R.id.name_str);
-                layout = itemView.findViewById(R.id.list_element);
-                personAge = (TextView) itemView.findViewById(R.id.num_str);
-                copyBtn = (ImageButton) itemView.findViewById(R.id.copy_btn);
-            }
-        }
     }
-
+final int RESULT_DIAL=1;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -133,17 +119,17 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(MainActivity.this, EditorActivity.class);
+                startActivityForResult(intent, RESULT_DIAL);
             }
         });
         RecyclerView rv = (RecyclerView)findViewById(R.id.rv);
         rv.setHasFixedSize(true);
         LinearLayoutManager llm = new LinearLayoutManager(getApplicationContext());
         rv.setLayoutManager(llm);
-        initializeData();
-        RVAdapter adapter = new RVAdapter(persons);
+        adapter = new RVAdapter();
         rv.setAdapter(adapter);
+
     }
 
     @Override
@@ -154,6 +140,13 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+       if(requestCode == RESULT_DIAL)
+       {
+           adapter.notifyDataSetChanged();
+       }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
